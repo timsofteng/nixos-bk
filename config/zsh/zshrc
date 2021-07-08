@@ -1,0 +1,95 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# Set up the prompt
+
+autoload -Uz promptinit
+promptinit
+prompt adam1
+
+setopt histignorealldups sharehistory
+
+# Use emacs keybindings even if our EDITOR is set to vi
+bindkey -e
+
+# Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
+HISTSIZE=1000
+SAVEHIST=1000
+HISTFILE=~/.zsh_history
+# Use modern completion system
+autoload -Uz compinit
+compinit
+
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' completer _expand _complete _correct _approximate
+zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' menu select=2
+eval "$(dircolors -b)"
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+zstyle ':completion:*' menu select=long
+zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' use-compctl false
+zstyle ':completion:*' verbose true
+
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+
+
+load_module() {
+  local gh_user="$1"
+  local name="$2"
+  local extension="$3"
+  local filename="$name.$extension"
+  local dir="$HOME/.zsh/$name"
+  local filepath="$dir/$filename"
+  mkdir -p "$HOME/.zsh"
+  if type git >/dev/null && ! [ -f "$filepath"  ]; then
+    echo "Plugin '$name' is not found, installing..."
+    git clone --depth=1 "https://github.com/$gh_user/$name.git" "$dir"
+  fi
+  if [ -f "$filepath"  ]; then
+    source "$filepath"
+  fi
+
+}
+
+load_module romkatv powerlevel10k zsh-theme
+load_module zsh-users zsh-autosuggestions zsh
+load_module zsh-users zsh-syntax-highlighting zsh load_module wfxr forgit plugin.zsh
+load_module Aloxaf fzf-tab plugin.zsh
+
+#To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+export EDITOR=nvim
+export BROWSER="chromium"
+export TERMINAL="foot"
+export PATH=$HOME/bin:$PATH
+export MOZ_ENABLE_WAYLAND=1
+
+export XDG_SESSION_TYPE=wayland
+
+export XDG_CURRENT_DESKTOP="sway"
+export XDG_SESSION_DESKTOP=sway
+export FZF_DEFAULT_COMMAND='fd --type file --follow --hidden --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+if [ -n "${commands[fzf-share]}"  ]; then
+  source "$(fzf-share)/key-bindings.zsh"
+  source "$(fzf-share)/completion.zsh"
+fi
+
+export NNN_PLUG='f:finder;o:fzopen;p:preview-tabbed;d:diffs;t:nmount;v:imgview'
+export NNN_FIFO=/tmp/nnn.fifo
+
+
+#nixos direnv
+eval "$(direnv hook zsh)"
+# alias nvim="appimage-run /home/tim/bin/nvim.appimage"
